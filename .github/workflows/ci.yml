@@ -1,0 +1,62 @@
+name: CI
+
+# Trigger the workflow on push or pull requests to the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Define jobs to run
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+
+    steps:
+      # Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21' # Match the version in go.mod
+
+      # Cache Go modules for faster builds
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod', '**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # Run tests with verbose output and coverage
+      - name: Run tests
+        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+
+      # Generate and display coverage report
+      - name: Upload coverage report
+        run: |
+          go tool cover -func=coverage.out
+          go tool cover -html=coverage.out -o coverage.html
+          cat coverage.out # Display in logs
+
+      # Archive coverage artifacts
+      - name: Archive coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage.out
+            coverage.html
+
+      # Fail the build if tests fail
+      - name: Check test success
+        run: |
+          if [ $? -ne 0 ]; then
+            echo "Tests failed"
+            exit 1
+          fi
