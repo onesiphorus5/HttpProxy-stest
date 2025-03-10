@@ -22,7 +22,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21.6' # Match the version in go.mod
+          go-version: '1.24.1' # Match the version in go.mod
 
       # Cache Go modules for faster builds
       - name: Cache Go modules

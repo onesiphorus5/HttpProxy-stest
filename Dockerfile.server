@@ -1,0 +1,14 @@
+FROM golang:1.24.1 AS builder
+WORKDIR /HttpProxy-stest
+COPY go.mod ./
+COPY server/server.go ./server/
+COPY proxy/proxy.go ./proxy/
+COPY main.go ./
+RUN go mod tidy
+RUN CGO_ENABLED=0 GOOS=linux go build -o server_exec main.go
+
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /HttpProxy-stest/server_exec .
+EXPOSE 8000
+CMD ["./server_exec"]
